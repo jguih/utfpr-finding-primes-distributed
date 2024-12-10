@@ -1,4 +1,5 @@
 from multiprocessing import Pool, cpu_count
+from Client import get_primes_from_server
 
 def find_primes_in_interval(start_end):
     """
@@ -43,6 +44,30 @@ def find_primes_in_interval_parallel(start, end, num_processes = cpu_count()):
     primes = []
     for sublist in results:
         primes.extend(sublist)
+
+    return sorted(primes)
+
+def find_primes_in_interval_distributed(start, end, num_processes, host='127.0.0.1', port=12345):
+    """
+    Distributes the find_primes_in_interval function using socket communication.
+
+    :param start: The starting number of the interval (inclusive)
+    :param end: The ending number of the interval (inclusive)
+    :param num_processes: Number of processes to divide the task among
+    :param host: The host address of the server (default is '127.0.0.1')
+    :param port: The port number of the server (default is 12345)
+    :return: A list of all prime numbers in the interval
+    """
+    range_size = (end - start + 1) // num_processes
+    subranges = [
+        (start + i * range_size, (start + (i + 1) * range_size) - 1 if i < num_processes - 1 else end)
+        for i in range(num_processes)
+    ]
+    
+    primes = []
+    for start, end in subranges:
+        primes_from_server = get_primes_from_server(start, end, host, port)
+        primes.extend(primes_from_server)
 
     return sorted(primes)
 
